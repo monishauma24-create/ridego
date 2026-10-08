@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: backend-docker:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DB_HOST
+              value: "database"
+            - name: DB_NAME
+              value: "ridebooking"
+            - name: DB_USER
+              value: "rideuser"
+            - name: DB_PASSWORD
+              value: "ridepassword"
+            - name: DB_PORT
+              value: "3306"
