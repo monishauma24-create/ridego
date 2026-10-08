@@ -1,8 +1,14 @@
 pipeline {
     agent any
 
-    stages {
+    environment {
+        // CHANGE THIS: Replace 'ubuntu' with the actual username of the account 
+        // where you ran 'minikube start' on your server.
+        MINIKUBE_HOME = '/home/ubuntu'
+        KUBECONFIG    = '/home/ubuntu/.kube/config'
+    }
 
+    stages {
         stage('Checkout') {
             steps {
                 checkout scm
@@ -23,6 +29,7 @@ pipeline {
 
         stage('Load Images into Minikube') {
             steps {
+                // Jenkins can now find the cluster thanks to MINIKUBE_HOME
                 sh 'minikube image load backend-docker:latest'
                 sh 'minikube image load frontend-docker:latest'
             }
@@ -30,13 +37,8 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/mysql-pvc.yaml'
-                sh 'kubectl apply -f k8s/mysql-deployment.yaml'
-                sh 'kubectl apply -f k8s/mysql-service.yaml'
-                sh 'kubectl apply -f k8s/backend-deployment.yaml'
-                sh 'kubectl apply -f k8s/backend-service.yaml'
-                sh 'kubectl apply -f k8s/frontend-deployment.yaml'
-                sh 'kubectl apply -f k8s/frontend-service.yaml'
+                // You can apply the entire directory at once to keep it clean
+                sh 'kubectl apply -f k8s/'
             }
         }
 
