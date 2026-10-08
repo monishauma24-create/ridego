@@ -2,10 +2,10 @@ pipeline {
     agent any
 
     environment {
-        // CHANGE THIS: Replace 'ubuntu' with the actual username of the account 
-        // where you ran 'minikube start' on your server.
-        MINIKUBE_HOME = '/home/ubuntu'
-        KUBECONFIG    = '/home/ubuntu/.kube/config'
+        // Tells Minikube and kubectl to use Jenkins' own workspace directory,
+        // which completely avoids "permission denied" errors in /home/ubuntu.
+        MINIKUBE_HOME = "${WORKSPACE}/.minikube"
+        KUBECONFIG    = "${WORKSPACE}/.kube/config"
     }
 
     stages {
@@ -29,7 +29,10 @@ pipeline {
 
         stage('Load Images into Minikube') {
             steps {
-                // Jenkins can now find the cluster thanks to MINIKUBE_HOME
+                // Starts Minikube within the isolated Jenkins environment block
+                sh 'minikube start --driver=docker'
+                
+                // Loads the newly built local Docker images into Minikube's registry
                 sh 'minikube image load backend-docker:latest'
                 sh 'minikube image load frontend-docker:latest'
             }
@@ -37,13 +40,14 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // You can apply the entire directory at once to keep it clean
+                // Applies all configuration YAML manifests inside your k8s folder
                 sh 'kubectl apply -f k8s/'
             }
         }
 
         stage('Verify Deployment') {
             steps {
+                // Displays status overview to verify successful rollout
                 sh 'kubectl get pods'
                 sh 'kubectl get services'
             }
